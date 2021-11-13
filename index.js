@@ -27,6 +27,8 @@ async function run() {
         const database = client.db('apartment_apartio');
         const productCollection = database.collection('product');
         const orderCollection = database.collection('order');
+        const usersCollection = database.collection('users');
+        const feedbackCollection = database.collection('feedback');
 		
 		// There will be All API 
 
@@ -49,6 +51,26 @@ async function run() {
       res.json(result)
     });
 
+    // POST/CREATE API Add User
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await usersCollection.insertOne(user);
+      console.log(result);
+      res.json(result);
+    });
+
+    // POST/CREATE API User Feedback
+
+    app.post('/reviews', async (req, res) => {
+      const feedback = req.body;
+      console.log(feedback);
+      const result = await feedbackCollection.insertOne(feedback);
+      console.log(result);
+      res.json(result);
+    });
+
 
     // GET/READ API Product
       
@@ -66,20 +88,66 @@ async function run() {
       res.send(order); 
     });
 
-    // PUT/UPDATE API 
-    
-    app.put('/orderUpdate/:id', async(req, res) => {
-      const filter = { _id: ObjectId(req.params.id) };
-    console.log(req.params.id);
-    
-    const result = await orderCollection.updateOne(filter, {
-      $set: {
-        status: req.body.status,
-      },
+    // GET/READ API My Order
+
+    app.get("/myOrders/:email", async (req, res) => {
+      console.log(req.params.email);
+      const result = await orderCollection
+        .find({ email: req.params.email })
+        .toArray();
+      res.send(result);
     });
-    res.send(result);
-    console.log(result);
- 
+
+    // GET/READ API Check admin or not
+
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let isAdmin = false;
+      if (user?.role === 'admin') {
+          isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
+  })
+
+  // GET/READ API Feedback 
+      
+  app.get('/reviews', async(req, res) => {
+    const cursor = feedbackCollection.find({});
+    const users = await cursor.toArray();
+    res.send(users); 
+  });
+
+    // PUT/UPDATE API Status Update
+
+    app.put("/updateStatus/:id", (req, res) => {
+      const id = req.params.id;
+      const updatedStatus = req.body.status;
+      const filter = { _id: ObjectId(id) };
+      console.log(updatedStatus);
+      orderCollection
+        .updateOne(filter, {
+          $set: { status: updatedStatus },
+        })
+        .then((result) => {
+          res.send(result);
+        });
+    });
+    
+    
+    // PUT/UPDATE API Make Admin
+
+    app.put("/makeAdmin", async (req, res) => {
+      const filter = { email: req.body.email };
+      const result = await usersCollection.find(filter).toArray();
+      if (result) {
+        const documents = await usersCollection.updateOne(filter, {
+          $set: { role: "admin" },
+        });
+        console.log(documents);
+      }
+      
     });
 
     // DELETE/REMOVE API Product
@@ -95,6 +163,16 @@ async function run() {
     // DELETE/REMOVE API Order
     
     app.delete('/orders/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await orderCollection.deleteOne(query);
+      console.log('deleted product id', result);
+      res.json(result);
+    });
+
+    // DELETE/REMOVE API My Order
+    
+    app.delete('/myOrders/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: ObjectId(id)};
       const result = await orderCollection.deleteOne(query);
