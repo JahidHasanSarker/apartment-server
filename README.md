@@ -4,7 +4,7 @@
 
 Cliant Site Link [https://abolire-authentication.web.app/](https://abolire-authentication.web.app/).
 
-Server Site Link [https://agile-tor-52722.herokuapp.com//](https://agile-tor-52722.herokuapp.com/).
+Server Site Link [https://agile-tor-52722.herokuapp.com/](https://agile-tor-52722.herokuapp.com/).
 
 ## Available Language
 
